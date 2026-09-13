@@ -1,0 +1,14 @@
+{
+  "training_samples": 59040,
+  "validation_samples": 12960,
+  "train_mae": 0.04573178291320801,
+  "validation_mae": 0.0528363361954689,
+  "rl_score": 55.75502014160156,
+  "architecture": "olfactory projection + central-complex heading + wall-risk sensors + reward/punishment reinforcement-tuned transformer readout",
+  "outputs": [
+    "left",
+    "right",
+    "forward",
+    "brake"
+  ]
+}

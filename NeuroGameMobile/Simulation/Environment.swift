@@ -12,43 +12,54 @@ struct WorldEnvironment {
     struct Food: Identifiable {
         let id: Int
         var position: CGPoint
-        var radius: CGFloat = 7
+        var radius: CGFloat
     }
 
     struct StepResult {
         let consumedFood: Bool
+        let hitWall: Bool
     }
 
     let size: CGSize
+    let scenario: EnvironmentScenario
     var agent: Agent
     var foods: [Food]
     private var random: SeededRandom
 
-    init(size: CGSize, seed: UInt64) {
+    init(size: CGSize, scenario: EnvironmentScenario) {
         self.size = size
-        self.random = SeededRandom(seed: seed)
-        self.agent = Agent(position: CGPoint(x: size.width * 0.5, y: size.height * 0.5), heading: 0, velocity: .zero)
+        self.scenario = scenario
+        self.random = SeededRandom(seed: scenario.seed)
+        self.agent = Agent(
+            position: CGPoint(x: size.width * 0.5, y: size.height * 0.5),
+            heading: random.nextDouble(in: (-Double.pi)...Double.pi),
+            velocity: .zero
+        )
         self.foods = []
-        for id in 0..<18 {
-            foods.append(Food(id: id, position: WorldEnvironment.randomPoint(in: size, random: &random)))
+        for id in 0..<scenario.foodCount {
+            foods.append(Food(
+                id: id,
+                position: WorldEnvironment.randomPoint(in: size, random: &random),
+                radius: CGFloat(scenario.foodRadius)
+            ))
         }
     }
 
     mutating func step(action: AgentAction, dt: Double) -> StepResult {
-        agent.heading += action.turn * dt * 5.6
+        agent.heading += action.turn * dt * scenario.turnRate
         let direction = CGVector(dx: cos(agent.heading), dy: sin(agent.heading))
-        agent.velocity.dx += direction.dx * action.thrust * dt * 430
-        agent.velocity.dy += direction.dy * action.thrust * dt * 430
-        agent.velocity *= 0.94
+        agent.velocity.dx += direction.dx * action.thrust * dt * scenario.acceleration
+        agent.velocity.dy += direction.dy * action.thrust * dt * scenario.acceleration
+        agent.velocity *= scenario.damping
 
         let speed = hypot(agent.velocity.dx, agent.velocity.dy)
-        if speed > 320 {
-            agent.velocity *= 320 / speed
+        if speed > scenario.maxSpeed {
+            agent.velocity *= scenario.maxSpeed / speed
         }
 
         agent.position.x += agent.velocity.dx * dt
         agent.position.y += agent.velocity.dy * dt
-        keepAgentInBounds()
+        let hitWall = keepAgentInBounds()
 
         var consumed = false
         for index in foods.indices {
@@ -57,29 +68,35 @@ struct WorldEnvironment {
             let distance = hypot(dx, dy)
             if distance < foods[index].radius + agent.radius {
                 foods[index].position = Self.randomPoint(in: size, random: &random)
+                foods[index].radius = CGFloat(scenario.foodRadius)
                 consumed = true
             }
         }
-        return StepResult(consumedFood: consumed)
+        return StepResult(consumedFood: consumed, hitWall: hitWall)
     }
 
-    private mutating func keepAgentInBounds() {
+    private mutating func keepAgentInBounds() -> Bool {
         let margin = agent.radius
+        var hitWall = false
         if agent.position.x < margin {
             agent.position.x = margin
-            agent.velocity.dx = abs(agent.velocity.dx) * 0.35
+            hitWall = true
         } else if agent.position.x > size.width - margin {
             agent.position.x = size.width - margin
-            agent.velocity.dx = -abs(agent.velocity.dx) * 0.35
+            hitWall = true
         }
 
         if agent.position.y < margin {
             agent.position.y = margin
-            agent.velocity.dy = abs(agent.velocity.dy) * 0.35
+            hitWall = true
         } else if agent.position.y > size.height - margin {
             agent.position.y = size.height - margin
-            agent.velocity.dy = -abs(agent.velocity.dy) * 0.35
+            hitWall = true
         }
+        if hitWall {
+            agent.velocity = .zero
+        }
+        return hitWall
     }
 
     private static func randomPoint(in size: CGSize, random: inout SeededRandom) -> CGPoint {
