@@ -33,7 +33,10 @@ xcodebuild -project NeuroGameMobile.xcodeproj -scheme NeuroGameMobile -destinati
 PC 훈련 데이터 경로도 준비되어 있습니다. `TrajectoryRecorder`는 실행 중 최근 토큰, 뇌 출력, Transformer bias, 행동, 보상, 환경 조건을 `TrajectorySample` 형식으로 모읍니다. 이 JSONL 샘플을 모아 더 큰 행동 모방 또는 보상 기반 학습으로 `Models/NeuroContextTransformer.mlpackage`를 교체할 수 있습니다. 기본 모델 재생성은 `Tools/create_context_transformer.py`, 벌레 신경망 힌트 기반 훈련은 `Tools/train_insect_transformer.py`를 사용합니다.
 
 현재 렌더링과 시뮬레이션은 메인 스레드에서 수행됩니다. 더 큰 네트워크로 확장할 때는 시뮬레이션 actor와 스냅샷 게시 주기를 분리하세요.
-\n---\n\n## English
+
+---
+
+## English
 
 NeuroGame Mobile v0.1 is an on-device neural exploration simulation for iOS 17+, built with Swift and SwiftUI Canvas.
 
