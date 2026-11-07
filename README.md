@@ -4,50 +4,71 @@
 
 ## 日本語
 
-NeuroGame Mobile v0.1 は、Swift と SwiftUI Canvas で作られた iOS 17 以降向けのオンデバイス神経探索シミュレーションです。
+Swift + SwiftUI CanvasベースのiOS 17+オンデバイスニューラルネットワークナビゲーションシミュレーションv0.1。
 
-### 実行
+## 実行
 
-Xcode 16 以降で `NeuroGameMobile.xcodeproj` を開き、NeuroGameMobile スキームと iPhone シミュレーターを選んで実行します。実機では Signing & Capabilities から Team を選択します。外部パッケージや AI API キーは不要です。
+`NeuroGameMobile.xcodeproj`をXcode 16以降で開き、NeuroGameMobileスキームとiPhoneシミュレータを選択して実行します。実際の端末では、Signing & Capabilitiesで自分のチームを選択してください。外部パッケージやAI APIキーは必要ありません。
 
 ```sh
 xcodebuild -project NeuroGameMobile.xcodeproj -scheme NeuroGameMobile -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
 ```
 
-### 構成と範囲
+## 設定
 
-移動・衝突・餌を扱う環境、32入力の SensorEncoder、500ニューロン・4,000疎結合の BrainSimulator、24フレームの文脈を使う Core ML Transformer、運動出力の ActionDecoder、Canvas 可視化で構成されています。
+- Environment: 移動、境界の衝突、餌の消費と再生成。
+- EnvironmentScenario：PCトレーニングに使うランダム化環境とモバイル実行評価環境を分離。トレーニングは複数のランダム環境で行われ、アプリは固定実行環境で学習されたモデルを繰り返し実行。
+- SensorEncoder：供給方向16チャンネルと内部状態を含む32個の入力。
+- BrainSimulator：500個の人工ニューロン、4,000個の希少再帰接続、膜電位漏洩、適応発火閾値、発火跡。純粋なSwiftの計算。
+- TransformerContext:最近24フレームのセンサー、直前行動、補償、エネルギー、環境トークンをCore ML Transformerに入力して4行動出力のbiasを計算。現在のモデルは、PCでワーム神経系ヒントを入れたexpertポリシーで訓練されている。
+- ActionDecoder：4つの運動出力集団での回転と推進力の計算。
+- ビジュアル化：世界とニューラルネットワークをキャンバスとしてマーク。実際の再帰接続線、発話ノード、興奮性/抑制性色、ノード選択と拡大画面。
 
-実際のショウジョウバエ connectome の再現ではなく、生物学的着想に基づく人工モデルです。学習はランダム化環境を用いる PC 上で行い、iPhone は固定環境でモデルを実行します。モデル生成、軌跡収集、拡張方法と制約は韓国語セクションにあります。
+## モデルの範囲と拡張
+
+生物学的インスピレーションを受けた人工モデルであり、実際のチョウハエコネクトム再現ではありません。このアプリはモバイルで訓練されていません。 PCでランダム化された複数のトレーニング環境でモデルを学習し、iPhoneではそのCore MLモデルを固定実行環境で実行します。エサ収集性能は実験的です。エネルギー０でもシミュレーションは継続する。
+
+アプリ内では、マップは自動的に変わりません。再起動しても現在のマップを繰り返します。ユーザーがメニューの`새 맵`を押したときにのみ、同じ実行難易度の新しいシードに変わり、トレーニングされたモデルの一般化行動とニューラルネットワーク活動を観察できます。
+
+`BrainSimulator.buildNetwork()`の生成配線をデータローダに置き換えることで、実際の接続データを導入できます。 `NeuralConnection`は、レンダラーが消費する読み取り専用接続表現です。将来の世界モデルは、センサーエンコーダーと脳の間に予測入力を提供する別々のモジュールとして追加することができます。可視化座標は固定された抽象配置であり、解剖学的位置を意味しません。
+
+`Models/NeuroContextTransformer.mlpackage`はモバイル実行用のCore MLモデルです。現在含まれているモデルは`Tools/train_insect_transformer.py`で作成され、嗅覚投影経路、中央複合体方向/速度信号、壁危険センサー、補償/パネルベースの強化学習スコアを使用してPCで訓練されました。モバイルアプリには壁回避を直接指示する行動コードがなく、モデルがセンサー入力を見て行動biasを出します。最後のトレーニング結果は`Models/InsectTrainingReport.json`に保存されます。
+
+PCトレーニングデータパスも用意されています。 `TrajectoryRecorder`は、実行中の最近のトークン、脳出力、Transformer bias、行動、報酬、環境条件を`TrajectorySample`形式にまとめます。このJSONLサンプルを集めて、より大きな行動模倣または補償ベースの学習で`Models/NeuroContextTransformer.mlpackage`を置き換えることができます。基本モデルの再生は`Tools/create_context_transformer.py`、ワームニューラルネットワークのヒントベースのトレーニングは`Tools/train_insect_transformer.py`を使用しています。現在のレンダリングとシミュレーションはメインスレッドで行われます。より大きなネットワークに拡張する場合は、シミュレーションactorとスナップショット公開サイクルを分離してください。
 
 ## English
 
-NeuroGame Mobile v0.1 is an on-device neural exploration simulation for iOS 17+, built with Swift and SwiftUI Canvas.
+Swift + SwiftUI Canvas-based iOS 17+ on-device neural network exploration simulation v0.1.
 
-### Run
+## run
 
-Open `NeuroGameMobile.xcodeproj` in Xcode 16 or later, select the NeuroGameMobile scheme and an iPhone simulator, and run. For a physical device, select your own Team under Signing & Capabilities. No external packages or AI API keys are needed.
+Open `NeuroGameMobile.xcodeproj` in Xcode 16 or higher and select the NeuroGameMobile scheme and the iPhone simulator to run it. On the actual device, select your Team in Signing & Capabilities. No external packages or AI API keys are required.
 
 ```sh
 xcodebuild -project NeuroGameMobile.xcodeproj -scheme NeuroGameMobile -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
 ```
 
-### Components
+## Configuration
 
-- Environment handles movement, boundary collisions, and food consumption and regeneration. `EnvironmentScenario` separates randomized PC training environments from the fixed mobile evaluation environment.
-- `SensorEncoder` produces 32 inputs including 16 food-direction channels and internal state. `BrainSimulator` uses 500 artificial neurons, 4,000 sparse recurrent connections, membrane leakage, adaptive firing thresholds, and firing traces, all computed in Swift.
-- `TransformerContext` feeds the most recent 24 frames of sensors, previous actions, reward, energy, and environment tokens into a Core ML Transformer to bias four action outputs. The included model was trained on a PC using an expert policy informed by insect nervous systems.
-- `ActionDecoder` derives turning and thrust from four motor-output populations. Canvas visualizes the world, recurrent connections, firing nodes, excitatory/inhibitory colors, node selection, and zoom.
+- Environment: movement, boundary collision, food consumption and reproduction.
+- EnvironmentScenario: Separate the randomization environment used for PC training and the mobile execution evaluation environment. Training is performed in several random environments, and the app repeatedly runs the learned model in a fixed execution environment.
+- SensorEncoder: 32 inputs including 16 channels of feeding direction and internal state.
+- BrainSimulator: 500 artificial neurons, 4,000 sparse recursive connections, membrane potential leakage, adaptive firing threshold, and firing traces. Pure Swift calculations.
+- TransformerContext: Input the last 24 frames of sensor, previous action, reward, energy, and environment tokens into Core ML Transformer to calculate the bias of the four action outputs. The current model is trained on a PC with an expert policy with bug nervous system hints.
+- ActionDecoder: Calculate rotation and momentum from four sets of kinetic outputs.
+- Visualization: Display the world and neural network as Canvas. Real recursive lines, firing nodes, excitatory/inhibitory colors, node selection and zoom screen.
 
-### Model scope and extensions
+## Model scope and extension
 
-This is a biologically inspired artificial model, not a reconstruction of an actual fruit-fly connectome. Training occurs on a PC across randomized environments; the iPhone runs the Core ML model in a fixed environment. Food collection performance is experimental, and the simulation continues at zero energy.
+This is a biologically inspired artificial model and is not a reproduction of the actual Drosophila connectome. This app does not train on mobile. Train the model with multiple randomized training environments on your PC, and run the Core ML model in a fixed execution environment on your iPhone. Prey gathering performance is experimental. The simulation continues at energy 0.
 
-The map does not change automatically; restarting repeats it. The menu's new-map action selects a new seed at the same difficulty to observe generalization and neural activity. `BrainSimulator.buildNetwork()` could be replaced by a data loader to use real connections. `NeuralConnection` is the renderer's read-only connection representation. A future world model could provide predictive input between the sensor encoder and brain. Visualization coordinates are abstract and do not represent anatomical locations.
+The map does not change automatically within the app. A restart will also repeat the current map. Only when the user presses `새 맵` in the menu will it change to a new seed of the same execution difficulty, and the generalization behavior of the trained model and neural network activity can be observed.
 
-`Models/NeuroContextTransformer.mlpackage` is the mobile model. It was generated by `Tools/train_insect_transformer.py`, using olfactory projection paths, central-complex-style direction/speed signals, wall danger sensors, and reward/penalty-based RL scores. The app has no hand-coded wall-avoidance action; the model produces action biases from sensor inputs. The latest report is `Models/InsectTrainingReport.json`.
+By replacing the generation wiring in `BrainSimulator.buildNetwork()` with a data loader, you can introduce real connection data. `NeuralConnection` is a read-only connection representation consumed by the renderer. In the future, the world model can be added as a separate module that provides predictive input between the sensor encoder and the brain. Visualization coordinates are a fixed abstract arrangement and do not refer to anatomical locations.
 
-`TrajectoryRecorder` collects recent tokens, brain outputs, Transformer biases, actions, rewards, and environment conditions as JSONL `TrajectorySample` data for larger imitation or reward-based training. Use `Tools/create_context_transformer.py` to regenerate the base model or `Tools/train_insect_transformer.py` for insect-inspired training. Rendering and simulation currently run on the main thread; larger networks should separate a simulation actor from snapshot publication.
+`Models/NeuroContextTransformer.mlpackage` is a Core ML model for mobile execution. The currently included models were created with `Tools/train_insect_transformer.py` and trained on a PC using olfactory projection pathways, central complex direction/velocity signals, wall hazard sensors, and reward/penalty based reinforcement learning scores. In mobile apps, there is no behavioral code that directly instructs wall avoidance, and the model generates behavioral bias based on sensor input. The final training results are stored in `Models/InsectTrainingReport.json`.
+
+A PC training data path is also available. `TrajectoryRecorder` collects recent tokens, brain output, Transformer bias, behavior, rewards, and environmental conditions during execution in `TrajectorySample` format. This JSONL sample can be put together to replace `Models/NeuroContextTransformer.mlpackage` for larger action imitation or reward-based learning. Use `Tools/create_context_transformer.py` for base model regeneration and `Tools/train_insect_transformer.py` for bug neural network hint-based training.Currently rendering and simulation is done on the main thread. When scaling to larger networks, separate simulation actors and snapshot publishing cycles.
 
 ## 한국어
 
