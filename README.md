@@ -4,6 +4,8 @@
 
 ## 日本語
 
+[日本語](https://github.com/hjy0221/NeuroGameMobile#%E6%97%A5%E6%9C%AC%E8%AA%9E) · [English](https://github.com/hjy0221/NeuroGameMobile#english) · [한국어](https://github.com/hjy0221/NeuroGameMobile#%ED%95%9C%EA%B5%AD%EC%96%B4)
+
 Swift + SwiftUI CanvasベースのiOS 17+オンデバイスニューラルネットワークナビゲーションシミュレーションv0.1。
 
 ## 実行
@@ -38,6 +40,8 @@ PCトレーニングデータパスも用意されています。 `TrajectoryRec
 
 ## English
 
+[日本語](https://github.com/hjy0221/NeuroGameMobile#%E6%97%A5%E6%9C%AC%E8%AA%9E) · [English](https://github.com/hjy0221/NeuroGameMobile#english) · [한국어](https://github.com/hjy0221/NeuroGameMobile#%ED%95%9C%EA%B5%AD%EC%96%B4)
+
 Swift + SwiftUI Canvas-based iOS 17+ on-device neural network exploration simulation v0.1.
 
 ## run
@@ -71,6 +75,8 @@ By replacing the generation wiring in `BrainSimulator.buildNetwork()` with a dat
 A PC training data path is also available. `TrajectoryRecorder` collects recent tokens, brain output, Transformer bias, behavior, rewards, and environmental conditions during execution in `TrajectorySample` format. This JSONL sample can be put together to replace `Models/NeuroContextTransformer.mlpackage` for larger action imitation or reward-based learning. Use `Tools/create_context_transformer.py` for base model regeneration and `Tools/train_insect_transformer.py` for bug neural network hint-based training.Currently rendering and simulation is done on the main thread. When scaling to larger networks, separate simulation actors and snapshot publishing cycles.
 
 ## 한국어
+
+[日本語](https://github.com/hjy0221/NeuroGameMobile#%E6%97%A5%E6%9C%AC%E8%AA%9E) · [English](https://github.com/hjy0221/NeuroGameMobile#english) · [한국어](https://github.com/hjy0221/NeuroGameMobile#%ED%95%9C%EA%B5%AD%EC%96%B4)
 
 Swift + SwiftUI Canvas 기반 iOS 17+ 온디바이스 신경망 탐색 시뮬레이션 v0.1.
 
